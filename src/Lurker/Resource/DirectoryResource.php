@@ -10,6 +10,21 @@ use Symfony\Component\Config\Resource\DirectoryResource as BaseDirectoryResource
 class DirectoryResource extends BaseDirectoryResource implements ResourceInterface
 {
 
+    private $excludedFilesPaths;
+
+    /**
+     * Constructor.
+     *
+     * @param string $resource The file path to the resource
+     * @param string|null $pattern A pattern to restrict monitored files
+     * @param array $excludedFilesPaths
+     */
+    public function __construct($resource, $pattern = null, $excludedFilesPaths = [])
+    {
+        $this->excludedFilesPaths = $excludedFilesPaths;
+        parent::__construct($resource, $pattern);
+    }
+
     public function exists()
     {
         clearstatcache(true, $resource = $this->getResource());
@@ -85,6 +100,12 @@ class DirectoryResource extends BaseDirectoryResource implements ResourceInterfa
             // always monitor directories for changes, except the .. entries
             // (otherwise deleted files wouldn't get detected)
             if ($file->isDir() && '/..' === substr($file, -3)) {
+                continue;
+            }
+
+            // exclude files
+            preg_match('#^' . getcwd() . '(.*)#', $file->getRealPath(), $matches);
+            if (count($matches) >= 1 && in_array($matches[1], $this->excludedFilesPaths)) {
                 continue;
             }
 

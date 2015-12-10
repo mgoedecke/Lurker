@@ -24,6 +24,7 @@ class ResourceWatcher
     private $tracker;
     private $eventDispatcher;
     private $watching = false;
+    private $excludedFilesPaths = [];
 
     /**
      * Initializes path watcher.
@@ -70,6 +71,19 @@ class ResourceWatcher
     }
 
     /**
+     *
+     *
+     * @param $excludeFilePath
+     */
+    public function excludeFiles($excludeFilePath)
+    {
+        if (substr($excludeFilePath, 0, 1) !== '/') {
+            $excludeFilePath = '/' . $excludeFilePath;
+        }
+        $this->excludedFilesPaths[] = $excludeFilePath;
+    }
+
+    /**
      * Track resource with watcher.
      *
      * @param string                   $trackingId id to this track (used for events naming)
@@ -90,7 +104,7 @@ class ResourceWatcher
             if (is_file($resource)) {
                 $resource = new FileResource($resource);
             } elseif (is_dir($resource)) {
-                $resource = new DirectoryResource($resource);
+                $resource = new DirectoryResource($resource, null, $this->excludedFilesPaths);
             } else {
                 throw new InvalidArgumentException(sprintf(
                     'Second argument to track() should be either file or directory resource, '.
@@ -192,4 +206,5 @@ class ResourceWatcher
     {
         $this->watching = false;
     }
+
 }
